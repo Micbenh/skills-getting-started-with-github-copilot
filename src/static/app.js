@@ -25,6 +25,17 @@ document.addEventListener("DOMContentLoaded", () => {
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          <div class="participants">
+            <p><strong>Participants:</strong></p>
+            <ul>
+              ${details.participants.map(participant => `
+                <li style="list-style: none; display: flex; align-items: center;">
+                  <span>${participant}</span>
+                  <button class="delete-participant" data-activity="${name}" data-participant="${participant}" style="margin-left: auto; background: none; border: none; color: red; cursor: pointer;">&times;</button>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
         `;
 
         activitiesList.appendChild(activityCard);
@@ -62,6 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        fetchActivities(); // Refresh the activities list dynamically
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
@@ -79,6 +91,32 @@ document.addEventListener("DOMContentLoaded", () => {
       messageDiv.classList.remove("hidden");
       console.error("Error signing up:", error);
     }
+  });
+
+  // Add event listener for delete buttons
+  activitiesList.querySelectorAll(".delete-participant").forEach(button => {
+    button.addEventListener("click", async (event) => {
+      const activityName = button.getAttribute("data-activity");
+      const participantEmail = button.getAttribute("data-participant");
+
+      try {
+        const response = await fetch(
+          `/activities/${encodeURIComponent(activityName)}/unregister?email=${encodeURIComponent(participantEmail)}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (response.ok) {
+          // Remove the participant from the DOM
+          button.parentElement.remove();
+        } else {
+          console.error("Failed to unregister participant");
+        }
+      } catch (error) {
+        console.error("Error unregistering participant:", error);
+      }
+    });
   });
 
   // Initialize app
